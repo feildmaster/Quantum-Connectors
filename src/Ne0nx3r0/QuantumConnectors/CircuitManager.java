@@ -11,6 +11,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.Location;
 import java.util.ArrayList;
+import java.util.Set;
 
 public final class CircuitManager{
     private final QuantumConnectors plugin;
@@ -179,5 +180,10 @@ public final class CircuitManager{
         yml.setProperty("circuits", tempCircuits);
 
         yml.save();
+    }
+
+    public static Set<Location> getCircuitLocations()
+    {
+        return circuits.keySet();
     }
 }

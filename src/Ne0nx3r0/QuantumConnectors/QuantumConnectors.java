@@ -1,6 +1,9 @@
 package Ne0nx3r0.QuantumConnectors;
 
 import java.io.File;
+
+import org.bukkit.Chunk;
+import org.bukkit.World;
 import org.bukkit.util.config.Configuration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
@@ -21,10 +24,13 @@ import com.nijiko.permissions.PermissionHandler;
 import com.nijikokun.bukkit.Permissions.Permissions;
 import org.bukkit.plugin.Plugin;
 import java.util.HashMap;
+import java.util.logging.Logger;
 
-public class QuantumConnectors extends JavaPlugin{
+public class QuantumConnectors extends JavaPlugin {
+    private static Logger log = Logger.getLogger("Minecraft");
     private final QuantumConnectorsBlockListener blockListener = new QuantumConnectorsBlockListener(this);
     private final QuantumConnectorsPlayerListener playerListener = new QuantumConnectorsPlayerListener(this);
+    private final QuantumConnectorsWorldListener worldListener = new QuantumConnectorsWorldListener(this);
 
     public static Map<String,Integer> circuitTypes = new HashMap<String,Integer>();
 
@@ -46,6 +52,7 @@ public class QuantumConnectors extends JavaPlugin{
 //Configurables
     private int MAX_CHAIN_LINKS = 3;
     private int AUTOSAVE_INTERVAL = 10;//specified here in minutes
+    private int CHUNK_UNLOAD_RANGE = 5; //number of chunks surrounding the circuit to keep around when unloading chunks
 
     public void onEnable(){
 //Register events
@@ -53,7 +60,8 @@ public class QuantumConnectors extends JavaPlugin{
         pm.registerEvent(Event.Type.REDSTONE_CHANGE, blockListener, Priority.Normal, this);
         pm.registerEvent(Event.Type.BLOCK_BREAK, blockListener, Priority.Normal, this);
         pm.registerEvent(Event.Type.PLAYER_INTERACT, playerListener, Priority.Normal, this);
-
+        pm.registerEvent(Event.Type.CHUNK_UNLOAD, worldListener, Priority.Normal, this);
+        
 //Setup circuits
         circuitTypes.put("quantum",typeQuantum);
         circuitTypes.put("on",typeOn);
@@ -84,6 +92,13 @@ public class QuantumConnectors extends JavaPlugin{
         }
         AUTOSAVE_INTERVAL = iAutoSaveInterval*60*20;//convert to minutes
 
+        int iChunkUnloadRange = config.getInt("chunk_unload_range",-1);
+        if(iChunkUnloadRange == -1){
+            iChunkUnloadRange = CHUNK_UNLOAD_RANGE;
+            config.setProperty("chunk_unload_range",iChunkUnloadRange);
+        }
+        CHUNK_UNLOAD_RANGE = iChunkUnloadRange;
+
         config.save();
 
 //Scheduled saves
@@ -92,6 +107,9 @@ public class QuantumConnectors extends JavaPlugin{
 
 //Permissions
         setupPermissions();
+
+//Load chunks that contain circuits
+        preloadCircuitChunks();
 
 //Enabled msg
         PluginDescriptionFile pdfFile = this.getDescription();
@@ -319,6 +337,54 @@ public class QuantumConnectors extends JavaPlugin{
                 USING_PERMISSIONS = true;
                 this.permissionHandler = ((Permissions) permissionsPlugin).getHandler();
                 System.out.println("[Quantum Connectors] Integrated with Permissions");
+            }
+        }
+    }
+
+    /**
+     * Retrieves a handle to the logger we're using for this plugin
+     *
+     * @return the Logger
+     */
+    public Logger getLogger()
+    {
+        return log;
+    }
+
+    /**
+     * Gets the chunk unload range that was specified in the config
+     *
+     * @return the range
+     */
+    public int getChunkUnloadRange()
+    {
+        return CHUNK_UNLOAD_RANGE;
+    }
+
+    /**
+     * Loads chunks that contain circuits (with a range around them as well).
+     */
+    private void preloadCircuitChunks()
+    {
+        for (Location loc : CircuitManager.getCircuitLocations())
+        {
+            // get the center chunk from the block
+            Chunk center = loc.getBlock().getChunk();
+            // get the world from the chunk
+            World world = center.getWorld();
+            // get our surrounding range
+            int range = getChunkUnloadRange();
+
+            // iterate over the matrix of blocks that make up the center (circuit) block's chunk and the chunks within the "range"
+            for (int dx = -(range); dx <= range; dx++)
+            {
+                for (int dz = -(range); dz <= range; dz++)
+                {
+                    // load the chunk
+                    Chunk chunk = world.getChunkAt(center.getX() + dx,
+                                                   center.getZ() + dz);
+                    world.loadChunk(chunk);
+                }
             }
         }
     }
