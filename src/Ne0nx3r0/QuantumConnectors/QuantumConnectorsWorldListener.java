@@ -4,10 +4,8 @@ import org.bukkit.Location;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.event.world.WorldListener;
 
-import java.util.Set;
-
 /**
- * Author: niftymonkey
+ * Author: niftymonkey - https://github.com/niftymonkey
  */
 public class QuantumConnectorsWorldListener extends WorldListener
 {
@@ -49,7 +47,6 @@ public class QuantumConnectorsWorldListener extends WorldListener
                 // if we made it to here, that means that we ARE inside the range/matrix of chunks that surround a circuit
                 // so we're going to cancel the event so that this chunk doesn't get unloaded
 
-                plugin.getLogger().info("[QuantumConnectors] - Chunk contains or surrounds circuit node, not unloading.");
                 plugin.getLogger().finer("[QuantumConnectors] - Chunk contains or surrounds circuit node, not unloading.");
                 event.setCancelled(true);
 
