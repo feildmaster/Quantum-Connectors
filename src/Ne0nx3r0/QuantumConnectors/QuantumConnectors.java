@@ -9,7 +9,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event;
-import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
@@ -77,11 +76,13 @@ public class QuantumConnectors extends JavaPlugin {
         Configuration config = new Configuration(new File(this.getDataFolder(),"config.yml"));
         
         config.load();
+        Boolean save = false;
 
         int iMaxChainLinks = config.getInt("max_chain_links",-1);
         if(iMaxChainLinks == -1){
             iMaxChainLinks = MAX_CHAIN_LINKS;
             config.setProperty("max_chain_links",iMaxChainLinks);
+            save = true;
         }
         MAX_CHAIN_LINKS = iMaxChainLinks;
 
@@ -89,6 +90,7 @@ public class QuantumConnectors extends JavaPlugin {
         if(iAutoSaveInterval == -1){
             iAutoSaveInterval = AUTOSAVE_INTERVAL;
             config.setProperty("autosave_minutes",iAutoSaveInterval);
+            save = true;
         }
         AUTOSAVE_INTERVAL = iAutoSaveInterval*60*20;//convert to minutes
 
@@ -96,10 +98,12 @@ public class QuantumConnectors extends JavaPlugin {
         if(iChunkUnloadRange == -1){
             iChunkUnloadRange = CHUNK_UNLOAD_RANGE;
             config.setProperty("chunk_unload_range",iChunkUnloadRange);
+            save = true;
         }
         CHUNK_UNLOAD_RANGE = iChunkUnloadRange;
 
-        config.save();
+        if(save)
+            config.save();
 
 //Scheduled saves
         AUTO_SAVE_ID = getServer().getScheduler().scheduleSyncRepeatingTask(
@@ -112,8 +116,7 @@ public class QuantumConnectors extends JavaPlugin {
         preloadCircuitChunks();
 
 //Enabled msg
-        PluginDescriptionFile pdfFile = this.getDescription();
-        System.out.println("[Quantum Connectors] version " + pdfFile.getVersion() + " ENABLED");
+        System.out.println("[Quantum Connectors] version " + getDescription().getVersion() + " ENABLED");
     }
 
     public void msg(Player player,String sMessage){
@@ -170,7 +173,6 @@ public class QuantumConnectors extends JavaPlugin {
         return true;
     }
 
-    @Override
     public void onDisable(){
         circuits.Save();
 
@@ -322,7 +324,7 @@ public class QuantumConnectors extends JavaPlugin {
         }
     }
 
-    //Scheduled save mechanism
+//Scheduled save mechanism
     private Runnable autosaveCircuits = new Runnable() {
         public void run() {
             circuits.Save();
@@ -361,9 +363,7 @@ public class QuantumConnectors extends JavaPlugin {
         return CHUNK_UNLOAD_RANGE;
     }
 
-    /**
-     * Loads chunks that contain circuits (with a range around them as well).
-     */
+// Loads chunks that contain circuits (with a range around them as well).
     private void preloadCircuitChunks()
     {
         for (Location loc : CircuitManager.getCircuitLocations())

@@ -21,14 +21,12 @@ public class QuantumConnectorsBlockListener extends BlockListener{
         this.plugin = plugin;
     }
 
-    @Override
     public void onBlockRedstoneChange(BlockRedstoneEvent event){
         if(plugin.circuits.circuitExists(event.getBlock().getLocation())){
             plugin.activateCircuit(event.getBlock().getLocation(),event.getNewCurrent());
         }
     }
 
-    @Override
     public void onBlockBreak(BlockBreakEvent event){
         if(plugin.circuits.circuitExists(event.getBlock().getLocation())){
             plugin.circuits.removeCircuit(event.getBlock().getLocation());
