@@ -1,7 +1,10 @@
 name: Quantum Connectors
 main: Ne0nx3r0.QuantumConnectors.QuantumConnectors
-version: 0.3.4
-author: Ne0nx3r0
+version: 0.4
+authors:
+  - Ne0nx3r0
+  - Feildmaster
+  - Niftymonkey
 commands:
   qc:
     description: Quantum Connector Commands
