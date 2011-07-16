@@ -24,7 +24,6 @@ public class QuantumConnectorsPlayerListener extends PlayerListener {
         pendingSenders = new HashMap<Player,Location>();
     }
 
-    @Override
     public void onPlayerInteract(PlayerInteractEvent event){
         if(event.isCancelled()){
             return;
@@ -42,20 +41,10 @@ public class QuantumConnectorsPlayerListener extends PlayerListener {
             if(!pendingSenders.containsKey(player)){
                 if(plugin.circuits.isValidSender(block)){
                     if(plugin.circuits.circuitExists(block.getLocation())){
-                        plugin.msg(player,"A circuit already exists here!");
-                        return;
-                    }
-
-                    pendingSenders.put(player,event.getClickedBlock().getLocation());
-                    
-                    plugin.msg(player,"Sender saved!");
-
-                    if(block.getType() == Material.REDSTONE_WIRE
-                    || block.getType() == Material.REDSTONE_TORCH_OFF
-                    || block.getType() == Material.REDSTONE_TORCH_ON
-                    || block.getType() == Material.DIODE_BLOCK_OFF
-                    || block.getType() == Material.DIODE_BLOCK_ON){
-                        event.setCancelled(true);
+                        plugin.msg(player,ChatColor.YELLOW+"A circuit already exists here!");
+                    } else {
+                        pendingSenders.put(player,event.getClickedBlock().getLocation());
+                        plugin.msg(player,"Sender saved!");
                     }
                 }else if(plugin.circuits.circuitExists(block.getLocation())){//remove a possibly leftover circuit
                     plugin.circuits.removeCircuit(block.getLocation());
@@ -103,6 +92,7 @@ public class QuantumConnectorsPlayerListener extends PlayerListener {
                     plugin.msg(player,ChatColor.YELLOW+"Receivers: "+ChatColor.WHITE+plugin.circuits.getValidReceiversString());
                 }
             }
+            event.setCancelled(true); // Cancel any toggles or breaks.
         }
 
         //trigger for using wood/trap doors as senders
