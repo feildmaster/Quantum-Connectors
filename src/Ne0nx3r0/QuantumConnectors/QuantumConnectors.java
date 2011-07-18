@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.logging.Logger;
 
 public class QuantumConnectors extends JavaPlugin {
-    private static Logger log = Logger.getLogger("Minecraft");
+    private static final Logger log = Logger.getLogger("Minecraft");
     private final QuantumConnectorsBlockListener blockListener = new QuantumConnectorsBlockListener(this);
     private final QuantumConnectorsPlayerListener playerListener = new QuantumConnectorsPlayerListener(this);
     private final QuantumConnectorsWorldListener worldListener = new QuantumConnectorsWorldListener(this);
@@ -123,7 +123,6 @@ public class QuantumConnectors extends JavaPlugin {
         player.sendMessage(ChatColor.LIGHT_PURPLE+"[QC] "+ChatColor.WHITE+sMessage);
     }
 
-    @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args){
     	if(!(sender instanceof Player)){
             System.out.println("This command has to be called by a player");
@@ -250,23 +249,19 @@ public class QuantumConnectors extends JavaPlugin {
         Material mBlock = bReceiver.getType();
         int iData = (int) bReceiver.getData();
 
-        bReceiver.getBlockPower();
-
         if(mBlock == Material.LEVER
-        || mBlock == Material.POWERED_RAIL){
-            if((iData&0x08) == 0x08){
+            || mBlock == Material.POWERED_RAIL){
+            if((iData&0x08) == 0x08)
                 return 15;
-            }else{
+            else
                 return 0;
-            }
         }else if(mBlock == Material.IRON_DOOR_BLOCK 
-        || mBlock == Material.WOODEN_DOOR
-        || mBlock == Material.TRAP_DOOR){
-            if((iData&0x04) == 0x04){
+            || mBlock == Material.WOODEN_DOOR
+            || mBlock == Material.TRAP_DOOR){
+            if((iData&0x04) == 0x04)
                 return 15;
-            }else{
+            else
                 return 0;
-            }
         }
         return bReceiver.getBlockPower();
     }
@@ -283,44 +278,28 @@ public class QuantumConnectors extends JavaPlugin {
         int iData = (int) block.getData();
 
         if(mBlock == Material.LEVER || mBlock == Material.POWERED_RAIL){
-            if(on && (iData&0x08) != 0x08){
-                iData|=0x08;//send power on
-                block.setData((byte) iData);
-            }else if(!on && (iData&0x08) == 0x08){
-                iData^=0x08;//send power off
-                block.setData((byte) iData);
-            }
+            if(on && (iData&0x08) != 0x08) iData|=0x08; //send power on
+            else if(!on && (iData&0x08) == 0x08)iData^=0x08; //send power off
+                
+            block.setData((byte) iData);
         }else if(mBlock == Material.IRON_DOOR_BLOCK || mBlock == Material.WOODEN_DOOR){
-            Block bOtherPiece;
-
-            if((iData&0x08) == 0x08){
-                bOtherPiece = block.getFace(BlockFace.DOWN);
-            }else{
-                bOtherPiece = block.getFace(BlockFace.UP);
-            }
+            Block bOtherPiece = block.getRelative(((iData&0x08) == 0x08)?BlockFace.DOWN:BlockFace.UP);
             int iOtherPieceData = (int) bOtherPiece.getData();
 
             if(on && (iData&0x04) != 0x04){
-                iData|=0x04;//send open
-                block.setData((byte) iData);
-
-                iOtherPieceData|=0x04;//send open
-                bOtherPiece.setData((byte) iOtherPieceData);
+                iData|=0x04;
+                iOtherPieceData|=0x04;
             }else if(!on && (iData&0x04) == 0x04){
-                iData^=0x04;//send close
-                block.setData((byte) iData);
-
-                iOtherPieceData^=0x04;//send close
-                bOtherPiece.setData((byte) iOtherPieceData);
+                iData^=0x04;
+                iOtherPieceData^=0x04;
             }
+            block.setData((byte) iData);
+            bOtherPiece.setData((byte) iOtherPieceData);
         }else if(mBlock == Material.TRAP_DOOR){
-            if(on && (iData&0x04) != 0x04){
-                iData|=0x04;//send open
-                block.setData((byte) iData);
-            }else if(!on && (iData&0x04) == 0x04){
-                iData^=0x04;//send close
-                block.setData((byte) iData);
-            }
+            if(on && (iData&0x04) != 0x04) iData|=0x04;//send open
+            else if(!on && (iData&0x04) == 0x04) iData^=0x04;//send close
+            
+            block.setData((byte) iData);
         }
     }
 

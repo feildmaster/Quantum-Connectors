@@ -74,20 +74,19 @@ public final class CircuitManager{
 
     public boolean isValidSender(Block block){
         Material mBlock = block.getType();
-        for(int i=0;i<validSenders.length;i++){
-            if(mBlock == validSenders[i]){
+        for(int i=0;i<validSenders.length;i++)
+            if(mBlock == validSenders[i])
                 return true;
-            }
-        }
+
         return false;
     }
     
     public String getValidSendersString(){
-        String sMessage = "";
+        String msg = "";
         for(int i=0;i<validSenders.length;i++){
-            sMessage += validSenders[i].name().toLowerCase().replace("_"," ")+", ";
+            msg += (i!=0?", ":"")+validSenders[i].name().toLowerCase().replace("_"," ");
         }
-        return sMessage.substring(0,sMessage.length()-2);
+        return msg;
     }
 
     public boolean isValidReceiver(Block block){
@@ -101,11 +100,11 @@ public final class CircuitManager{
     }
 
     public String getValidReceiversString(){
-        String sMessage = "";
-        for(int i=0;i<validReceivers.length;i++){
-            sMessage += validReceivers[i].name().toLowerCase().replace("_"," ")+", ";
-        }
-        return sMessage.substring(0,sMessage.length()-2);
+        String msg = "";
+        for(int i=0;i<validReceivers.length;i++)
+            msg += (i!=0?", ":"")+validReceivers[i].name().toLowerCase().replace("_"," ");
+        
+        return msg;
     }
 
     public void Load(){
