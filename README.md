@@ -9,7 +9,7 @@ Version 0.4
 + Added chunk persistence
 + Wireless TnT support!
 * Cleaned Code
-* Fixed Issue #6
+* Fixed Issue [#6](https://github.com/feildmaster/Quantum-Connectors/issues/6)
 
 
 Version 0.3.4
