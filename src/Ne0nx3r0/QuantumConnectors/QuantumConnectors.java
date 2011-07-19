@@ -24,6 +24,9 @@ import com.nijikokun.bukkit.Permissions.Permissions;
 import org.bukkit.plugin.Plugin;
 import java.util.HashMap;
 import java.util.logging.Logger;
+import net.minecraft.server.EntityTNTPrimed;
+import org.bukkit.Effect;
+import org.bukkit.craftbukkit.CraftWorld;
 
 public class QuantumConnectors extends JavaPlugin {
     private static final Logger log = Logger.getLogger("Minecraft");
@@ -191,6 +194,9 @@ public class QuantumConnectors extends JavaPlugin {
         if(circuits.isValidReceiver(bReceiver)){
             int iType = circuit.type;
 
+            if(bReceiver.getType() == Material.TNT) // TnT is one time use!
+                circuits.removeCircuit(lSender);
+
             if(iType == typeQuantum){
                 if(current > 0){
                     setOn(bReceiver);
@@ -300,6 +306,12 @@ public class QuantumConnectors extends JavaPlugin {
             else if(!on && (iData&0x04) == 0x04) iData^=0x04;//send close
             
             block.setData((byte) iData);
+        }else if(mBlock == Material.TNT) {
+            block.setType(Material.AIR);
+            CraftWorld world = (CraftWorld)block.getWorld();
+            EntityTNTPrimed tnt = new EntityTNTPrimed(world.getHandle(), block.getX() + 0.5F, block.getY() + 0.5F, block.getZ() + 0.5F);
+            world.getHandle().addEntity(tnt);
+            block.getWorld().playEffect(block.getLocation(), Effect.SMOKE, 1);
         }
     }
 

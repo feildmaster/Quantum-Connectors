@@ -16,7 +16,6 @@ public class QuantumConnectorsWorldListener extends WorldListener
         this.plugin = plugin;
     }
 
-    @Override
     public void onChunkUnload(ChunkUnloadEvent event)
     {
         // only bother to do this if the event hasn't already been cancelled

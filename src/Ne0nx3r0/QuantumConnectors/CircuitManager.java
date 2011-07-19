@@ -69,7 +69,8 @@ public final class CircuitManager{
         Material.IRON_DOOR_BLOCK,
         Material.WOODEN_DOOR,
         Material.TRAP_DOOR,
-        Material.POWERED_RAIL
+        Material.POWERED_RAIL,
+        Material.TNT
     };
 
     public boolean isValidSender(Block block){
