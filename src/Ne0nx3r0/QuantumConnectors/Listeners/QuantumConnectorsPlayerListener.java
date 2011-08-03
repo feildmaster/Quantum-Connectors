@@ -1,5 +1,6 @@
-package Ne0nx3r0.QuantumConnectors;
+package Ne0nx3r0.QuantumConnectors.Listeners;
 
+import Ne0nx3r0.QuantumConnectors.QuantumConnectors;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerInteractEvent;
 import java.util.Map;
@@ -68,9 +69,9 @@ public class QuantumConnectorsPlayerListener extends PlayerListener {
                         int iData = (int) event.getClickedBlock().getData();
 
                         if((iData&0x08) == 0x08){
-                            bOtherPiece = block.getFace(BlockFace.DOWN);
+                            bOtherPiece = block.getRelative(BlockFace.DOWN);
                         }else{
-                            bOtherPiece = block.getFace(BlockFace.UP);
+                            bOtherPiece = block.getRelative(BlockFace.UP);
                         }
 
                         plugin.circuits.addCircuit(
@@ -94,7 +95,6 @@ public class QuantumConnectorsPlayerListener extends PlayerListener {
             }
             event.setCancelled(true); // Cancel any toggles or breaks.
         }
-
         //trigger for using wood/trap doors as senders
         else if(event.getClickedBlock() != null
         && plugin.circuits.circuitExists(event.getClickedBlock().getLocation())){

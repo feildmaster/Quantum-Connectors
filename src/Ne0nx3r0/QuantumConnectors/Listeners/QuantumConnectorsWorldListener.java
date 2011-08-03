@@ -1,5 +1,7 @@
-package Ne0nx3r0.QuantumConnectors;
+package Ne0nx3r0.QuantumConnectors.Listeners;
 
+import Ne0nx3r0.QuantumConnectors.Manager.CircuitManager;
+import Ne0nx3r0.QuantumConnectors.QuantumConnectors;
 import org.bukkit.Location;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.event.world.WorldListener;
@@ -28,14 +30,13 @@ public class QuantumConnectorsWorldListener extends WorldListener
                 // (based on the chunk's X and Z ... not the block's x and z)
 
                 // if this chunk is not inside that range, ignore this event and move on
-
+                
                 int circuitChunkX = loc.getBlock().getChunk().getX();
                 int chunkX = event.getChunk().getX();
                 if(Math.abs(chunkX - circuitChunkX) > plugin.getChunkUnloadRange())
                 {
                     continue;
                 }
-
                 int circuitChunkZ = loc.getBlock().getChunk().getZ();
                 int chunkZ = event.getChunk().getZ();
                 if(Math.abs(chunkZ - circuitChunkZ) > plugin.getChunkUnloadRange())

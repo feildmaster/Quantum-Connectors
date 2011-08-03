@@ -6,9 +6,10 @@ Changelog
 ---------
 Version 0.4
 
-+ Added chunk persistence
++ <s>Added chunk persistence</s> (Senders only)
 + Wireless TnT support!
 * Cleaned Code
+* Fixed Issue [#2](https://github.com/feildmaster/Quantum-Connectors/issues/2)
 * Fixed Issue [#6](https://github.com/feildmaster/Quantum-Connectors/issues/6)
 
 
@@ -49,5 +50,5 @@ This plugin uses the following libraries:
 
 *   Bukkit
 *   Craftbukkit
-*   [Minecraft_server.jar (or Minecraft.jar)](http://www.minecraft.net/download.jsp)
+*   [Minecraft_server.jar](http://www.minecraft.net/download/Minecraft_Server.exe?v=1311325327381)
 *   [Permissions]()

@@ -1,5 +1,6 @@
-package Ne0nx3r0.QuantumConnectors;
+package Ne0nx3r0.QuantumConnectors.Listeners;
 
+import Ne0nx3r0.QuantumConnectors.QuantumConnectors;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.block.BlockBreakEvent;

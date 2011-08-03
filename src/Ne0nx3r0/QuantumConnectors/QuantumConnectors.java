@@ -1,7 +1,8 @@
 package Ne0nx3r0.QuantumConnectors;
 
+import Ne0nx3r0.QuantumConnectors.Listeners.*;
+import Ne0nx3r0.QuantumConnectors.Manager.*;
 import java.io.File;
-
 import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.util.config.Configuration;
@@ -37,19 +38,18 @@ public class QuantumConnectors extends JavaPlugin {
     public static Map<String,Integer> circuitTypes = new HashMap<String,Integer>();
 
     public static PermissionHandler permissionHandler;
+    public static boolean USING_PERMISSIONS = false;
 
     public static CircuitManager circuits;
 
     private static int AUTO_SAVE_ID = -1;
 
-    public static boolean USING_PERMISSIONS = false;
-
-    public int typeQuantum = 0;
-    public int typeOn = 1;
-    public int typeOff = 2;
-    public int typeToggle = 3;
-    public int typeReverse = 4;
-    public int typeRandom = 5;
+    public final int typeQuantum = 0;
+    public final int typeOn = 1;
+    public final int typeOff = 2;
+    public final int typeToggle = 3;
+    public final int typeReverse = 4;
+    public final int typeRandom = 5;
 
 //Configurables
     private int MAX_CHAIN_LINKS = 3;
@@ -72,12 +72,9 @@ public class QuantumConnectors extends JavaPlugin {
         circuitTypes.put("reverse",typeReverse);
         circuitTypes.put("random",typeRandom);
 
-//Setup circuit manager
-        circuits = new CircuitManager(new File(this.getDataFolder(),"circuits.yml"),this);
-
 //Configuration
         Configuration config = new Configuration(new File(this.getDataFolder(),"config.yml"));
-        
+
         config.load();
         Boolean save = false;
 
@@ -111,6 +108,9 @@ public class QuantumConnectors extends JavaPlugin {
 //Scheduled saves
         AUTO_SAVE_ID = getServer().getScheduler().scheduleSyncRepeatingTask(
             this,autosaveCircuits,AUTOSAVE_INTERVAL,AUTOSAVE_INTERVAL);
+
+//Setup circuit manager
+        circuits = new CircuitManager(new File(this.getDataFolder(),"circuits.yml"),this);        
 
 //Permissions
         setupPermissions();
@@ -189,66 +189,68 @@ public class QuantumConnectors extends JavaPlugin {
     public void activateCircuit(Location lSender,int current,int chain){
         Circuit circuit = circuits.getCircuit(lSender);
 
-        Block bReceiver = circuit.reciever.getBlock();
+        for(Location receiver : circuit.getReceivers()) {
+            Block bReceiver = receiver.getBlock();
 
-        if(circuits.isValidReceiver(bReceiver)){
-            int iType = circuit.type;
+            if(circuits.isValidReceiver(bReceiver)){
+                int iType = circuit.type;
 
-            if(bReceiver.getType() == Material.TNT) // TnT is one time use!
+                if(bReceiver.getType() == Material.TNT) // TnT is one time use!
+                    circuits.removeCircuit(lSender);
+
+                if(iType == typeQuantum){
+                    if(current > 0){
+                        setOn(bReceiver);
+                    }else{
+                        setOff(bReceiver);
+                    }
+                }else if(iType == typeOn){
+                    if(current > 0){
+                        setOn(bReceiver);
+                    }
+                }else if(iType == typeOff){
+                    if(current > 0){
+                        setOff(bReceiver);
+                    }
+                }else if(iType == typeToggle){
+                    if(current > 0){
+                        if(getBlockCurrent(bReceiver) > 0){
+                            setOff(bReceiver);
+                        }else{
+                            setOn(bReceiver);
+                        }
+                    }
+                }else if(iType == typeReverse){
+                    if(current > 0){
+                        setOff(bReceiver);
+                    }else{
+                        setOn(bReceiver);
+                    }
+                }else if(iType == typeRandom){
+                    if(current > 0){
+                        Random randomGenerator = new Random();
+
+                        if(randomGenerator.nextBoolean()){
+                            setOn(bReceiver);
+                        }else{
+                            setOff(bReceiver);
+                        }
+                    }
+                }
+
+                //allow zero to be infinite
+                if(MAX_CHAIN_LINKS > 0){
+                    chain++;
+                }
+                if(chain <= MAX_CHAIN_LINKS && circuits.circuitExists(bReceiver.getLocation())){
+                    activateCircuit(bReceiver.getLocation(),getBlockCurrent(bReceiver),chain);
+                    //pass an array of the locations used so far instead of the chain count, so it can't loop
+                }
+            }else{
+                // Don't want to remove circuit, want to remove receiver
                 circuits.removeCircuit(lSender);
-
-            if(iType == typeQuantum){
-                if(current > 0){
-                    setOn(bReceiver);
-                }else{
-                    setOff(bReceiver);
-                }
-            }else if(iType == typeOn){
-                if(current > 0){
-                    setOn(bReceiver);
-                }
-            }else if(iType == typeOff){
-                if(current > 0){
-                    setOff(bReceiver);
-                }
-            }else if(iType == typeToggle){
-                if(current > 0){
-                    if(getBlockCurrent(bReceiver) > 0){
-                        setOff(bReceiver);
-                    }else{
-                        setOn(bReceiver);
-                    }
-                }
-            }else if(iType == typeReverse){
-                if(current > 0){
-                    setOff(bReceiver);
-                }else{
-                    setOn(bReceiver);
-                }
-            }else if(iType == typeRandom){
-                if(current > 0){
-                    Random randomGenerator = new Random();
-
-                    if(randomGenerator.nextBoolean()){
-                        setOn(bReceiver);
-                    }else{
-                        setOff(bReceiver);
-                    }
-                }
             }
-
-            //allow zero to be infinite
-            if(MAX_CHAIN_LINKS > 0){
-                chain++;
-            }
-            if(chain <= MAX_CHAIN_LINKS && circuits.circuitExists(bReceiver.getLocation())){
-                activateCircuit(bReceiver.getLocation(),getBlockCurrent(bReceiver),chain);
-                //pass an array of the locations used so far instead of the chain count, so it can't loop
-            }
-        }else{
-            circuits.removeCircuit(lSender);
         }
-
     }
 
     public int getBlockCurrent(Block bReceiver){
@@ -256,19 +258,15 @@ public class QuantumConnectors extends JavaPlugin {
         int iData = (int) bReceiver.getData();
 
         if(mBlock == Material.LEVER
-            || mBlock == Material.POWERED_RAIL){
-            if((iData&0x08) == 0x08)
-                return 15;
-            else
-                return 0;
-        }else if(mBlock == Material.IRON_DOOR_BLOCK 
+            || mBlock == Material.POWERED_RAIL)
+            return (iData&0x08)==0x08?15:0;
+
+        
+        else if(mBlock == Material.IRON_DOOR_BLOCK 
             || mBlock == Material.WOODEN_DOOR
-            || mBlock == Material.TRAP_DOOR){
-            if((iData&0x04) == 0x04)
-                return 15;
-            else
-                return 0;
-        }
+            || mBlock == Material.TRAP_DOOR)    
+            return (iData&0x04)==0x04?15:0;
+        
         return bReceiver.getBlockPower();
     }
 
@@ -339,8 +337,7 @@ public class QuantumConnectors extends JavaPlugin {
      *
      * @return the Logger
      */
-    public Logger getLogger()
-    {
+    public Logger getLogger() {
         return log;
     }
 
@@ -349,16 +346,13 @@ public class QuantumConnectors extends JavaPlugin {
      *
      * @return the range
      */
-    public int getChunkUnloadRange()
-    {
+    public int getChunkUnloadRange() {
         return CHUNK_UNLOAD_RANGE;
     }
 
 // Loads chunks that contain circuits (with a range around them as well).
-    private void preloadCircuitChunks()
-    {
-        for (Location loc : CircuitManager.getCircuitLocations())
-        {
+    private void preloadCircuitChunks() {
+        for (Location loc : CircuitManager.getCircuitLocations()) {
             // get the center chunk from the block
             Chunk center = loc.getBlock().getChunk();
             // get the world from the chunk
@@ -367,10 +361,8 @@ public class QuantumConnectors extends JavaPlugin {
             int range = getChunkUnloadRange();
 
             // iterate over the matrix of blocks that make up the center (circuit) block's chunk and the chunks within the "range"
-            for (int dx = -(range); dx <= range; dx++)
-            {
-                for (int dz = -(range); dz <= range; dz++)
-                {
+            for (int dx = -(range); dx <= range; dx++) {
+                for (int dz = -(range); dz <= range; dz++) {
                     // load the chunk
                     Chunk chunk = world.getChunkAt(center.getX() + dx,
                                                    center.getZ() + dz);
