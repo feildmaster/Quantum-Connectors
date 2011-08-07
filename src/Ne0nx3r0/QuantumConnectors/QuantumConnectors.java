@@ -1,7 +1,7 @@
 package Ne0nx3r0.QuantumConnectors;
 
 import Ne0nx3r0.QuantumConnectors.Listeners.*;
-import Ne0nx3r0.QuantumConnectors.Manager.*;
+import Ne0nx3r0.QuantumConnectors.Circuit.*;
 import java.io.File;
 import org.bukkit.Chunk;
 import org.bukkit.World;
@@ -24,6 +24,7 @@ import com.nijiko.permissions.PermissionHandler;
 import com.nijikokun.bukkit.Permissions.Permissions;
 import org.bukkit.plugin.Plugin;
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Logger;
 import net.minecraft.server.EntityTNTPrimed;
 import org.bukkit.Effect;
@@ -54,7 +55,8 @@ public class QuantumConnectors extends JavaPlugin {
 //Configurables
     private int MAX_CHAIN_LINKS = 3;
     private int AUTOSAVE_INTERVAL = 10;//specified here in minutes
-    private int CHUNK_UNLOAD_RANGE = 5; //number of chunks surrounding the circuit to keep around when unloading chunks
+    private int CHUNK_UNLOAD_RANGE = 0; //number of chunks surrounding the circuit to keep around when unloading chunks
+    private List<String> DISSABLED_WORLDS; // Want to dissable some worlds? Comming soon!
 
     public void onEnable(){
 //Register events
@@ -74,7 +76,6 @@ public class QuantumConnectors extends JavaPlugin {
 
 //Configuration
         Configuration config = new Configuration(new File(this.getDataFolder(),"config.yml"));
-
         config.load();
         Boolean save = false;
 
@@ -352,21 +353,24 @@ public class QuantumConnectors extends JavaPlugin {
 
 // Loads chunks that contain circuits (with a range around them as well).
     private void preloadCircuitChunks() {
-        for (Location loc : CircuitManager.getCircuitLocations()) {
-            // get the center chunk from the block
-            Chunk center = loc.getBlock().getChunk();
-            // get the world from the chunk
-            World world = center.getWorld();
-            // get our surrounding range
-            int range = getChunkUnloadRange();
+        for (Location loc : circuits.getCircuitLocations()) {
+            // Don't need to load sender...!
+            for(Location l : circuits.getCircuit(loc).getReceivers()) {
+                // get the center chunk from the block
+                Chunk center = loc.getBlock().getChunk();
+                // get the world from the chunk
+                World world = center.getWorld();
+                // get our surrounding range
+                int range = getChunkUnloadRange();
 
-            // iterate over the matrix of blocks that make up the center (circuit) block's chunk and the chunks within the "range"
-            for (int dx = -(range); dx <= range; dx++) {
-                for (int dz = -(range); dz <= range; dz++) {
-                    // load the chunk
-                    Chunk chunk = world.getChunkAt(center.getX() + dx,
-                                                   center.getZ() + dz);
-                    world.loadChunk(chunk);
+                // iterate over the matrix of blocks that make up the center (circuit) block's chunk and the chunks within the "range"
+                for (int dx = -(range); dx <= range; dx++) {
+                    for (int dz = -(range); dz <= range; dz++) {
+                        // load the chunk
+                        Chunk chunk = world.getChunkAt(center.getX() + dx,
+                                                       center.getZ() + dz);
+                        world.loadChunk(chunk);
+                    }
                 }
             }
         }

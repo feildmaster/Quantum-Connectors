@@ -1,4 +1,4 @@
-package Ne0nx3r0.QuantumConnectors.Manager;
+package Ne0nx3r0.QuantumConnectors.Circuit;
 
 import Ne0nx3r0.QuantumConnectors.QuantumConnectors;
 import org.bukkit.util.config.Configuration;
@@ -125,9 +125,11 @@ public final class CircuitManager{
                         if(yml.getProperty(path) == null) break; // If it doesn't exist, break the loop for the world
 
                         List<Location> list = new ArrayList<Location>();
-                        for(Object xyz : yml.getList(path+".receivers"))
-                            list.add(getLocation(world, xyz.toString().split(",")));
-
+                        for(Object xyz : yml.getList(path+".receivers")) {
+                            String[] loc = xyz.toString().split(","); // Iterated for multi-world... maybe?
+                            list.add(getLocation(plugin.getServer().getWorld(loc[3]), loc));
+                        }
+                        
                         addCircuit(getLocation(world, yml.getString(path+".sender").split(",")),
                                 list, yml.getInt(path+".type",0)); // Input the circuit
 
@@ -187,14 +189,8 @@ public final class CircuitManager{
                 (Integer) temp.get("rz")
             );
 
-            if(isValidSender(lSender.getBlock()) 
-            && isValidReceiver(lReceiver.getBlock())
-            && plugin.circuitTypes.containsValue(iType)
-			&& !lReceiver.toString().equals(lSender.toString())){
-                addCircuit(lSender,lReceiver,iType);
-            }else{
-                System.out.println("[QuantumConnectors] Removing invalid circuit.");
-            }
+            // Removed check, it's checked on activation anyway.
+            addCircuit(lSender,lReceiver,iType);
 	}
     }
 
@@ -202,24 +198,24 @@ public final class CircuitManager{
     public void saveWorld(String world) {
         if(yml.getProperty(world) != null) yml.removeProperty(world); // Remove world if it exists
         int count = 0;
-        for(Location key : circuits.keySet()) {
+        for(Location key : circuits.keySet()) 
+            if (key.getWorld().toString().equals(world)) {
             Circuit circuit = circuits.get(key);
             String path = world+".circuit_"+count;
 
             yml.setProperty(path+".type", circuit.type); // Save Type
-            yml.setProperty(path+".sender", key); // Save sender location
-
-            // ToDo: Find out if saving locations, or doing the current loops is better
+            yml.setProperty(path+".sender", 
+                    key.getBlockX()+","+key.getBlockY()+","+key.getBlockZ()); // Save sender location
+            
             List <String> temp = new ArrayList<String>();
-
             for(Location loc : circuit.getReceivers()) // Loop through receivers
-                temp.add(loc.getBlockX()+","+loc.getBlockY()+","+loc.getBlockZ());
+                temp.add(loc.getBlockX()+","+loc.getBlockY()+","+loc.getBlockZ()+","+loc.getWorld().getName());
 
             yml.setProperty(path+".receivers", temp); // Save receiver list
 
             circuits.remove(key); // Remove circuit from memory
 
-            count++;
+            count += 1;
         }
         loadedWorlds.remove(world); // World isn't loaded anymore.
         yml.save();
@@ -237,7 +233,6 @@ public final class CircuitManager{
             String wName = key.getWorld().getName(); // Get world name
             int count = worldCount.get(wName)==null?0:worldCount.get(wName); // Get world circuit ID
             String path  = wName+".circuit_"+count; // Set base path
-            System.out.println("Circuit being saved ("+wName+") ["+count+"]");
 
             yml.setProperty(path+".type", currentCircuit.type); // Save Type
             yml.setProperty(path+".sender", 
@@ -245,7 +240,7 @@ public final class CircuitManager{
 
             List <String> temp = new ArrayList<String>();
             for(Location loc : currentCircuit.getReceivers()) // Loop through receivers
-                temp.add(loc.getBlockX()+","+loc.getBlockY()+","+loc.getBlockZ());
+                temp.add(loc.getBlockX()+","+loc.getBlockY()+","+loc.getBlockZ()+","+loc.getWorld().getName());
 
             yml.setProperty(path+".receivers", temp); // Save receiver list
 
@@ -254,7 +249,7 @@ public final class CircuitManager{
         yml.save();
     }
 
-    public static Set<Location> getCircuitLocations()
+    public Set<Location> getCircuitLocations()
     {
         return circuits.keySet();
     }

@@ -4,19 +4,9 @@ import Ne0nx3r0.QuantumConnectors.QuantumConnectors;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.block.BlockFace;
 
 public class QuantumConnectorsBlockListener extends BlockListener{
     private final QuantumConnectors plugin;
-
-    private static BlockFace[] faces = {
-        BlockFace.NORTH,
-        BlockFace.SOUTH,
-        BlockFace.EAST,
-        BlockFace.WEST,
-        BlockFace.UP,
-        BlockFace.DOWN
-    };
 
     public QuantumConnectorsBlockListener(final QuantumConnectors plugin){
         this.plugin = plugin;

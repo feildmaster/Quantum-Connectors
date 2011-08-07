@@ -1,4 +1,4 @@
-package Ne0nx3r0.QuantumConnectors.Manager;
+package Ne0nx3r0.QuantumConnectors.Circuit;
 
 import java.util.ArrayList;
 import java.util.List;
