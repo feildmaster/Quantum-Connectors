@@ -26,9 +26,7 @@ public class QuantumConnectorsPlayerListener extends PlayerListener {
     }
 
     public void onPlayerInteract(PlayerInteractEvent event){
-        if(event.isCancelled()){
-            return;
-        }
+        if(event.isCancelled()) return;
 
         //holding redstone, clicked a block, and has a pending circuit from /qc
         if(event.getItem() != null
@@ -65,14 +63,8 @@ public class QuantumConnectorsPlayerListener extends PlayerListener {
                     );
 
                     if(event.getClickedBlock().getType() == Material.WOODEN_DOOR){
-                        Block bOtherPiece;
                         int iData = (int) event.getClickedBlock().getData();
-
-                        if((iData&0x08) == 0x08){
-                            bOtherPiece = block.getRelative(BlockFace.DOWN);
-                        }else{
-                            bOtherPiece = block.getRelative(BlockFace.UP);
-                        }
+                        Block bOtherPiece = block.getRelative((iData&0x08) == 0x08?BlockFace.DOWN:BlockFace.UP);
 
                         plugin.circuits.addCircuit(
                             bOtherPiece.getLocation(),
@@ -101,7 +93,7 @@ public class QuantumConnectorsPlayerListener extends PlayerListener {
             Block block = event.getClickedBlock();
 
             if(block.getType() == Material.WOODEN_DOOR || block.getType() == Material.TRAP_DOOR){
-                plugin.activateCircuit(event.getClickedBlock().getLocation(),plugin.getBlockCurrent(block));
+                plugin.activateCircuit(event.getClickedBlock().getLocation(),plugin.circuits.getBlockCurrent(block));
             }
         }
     }

@@ -30,7 +30,7 @@ public class QuantumConnectorsWorldListener extends WorldListener
         // THIS LISTENER TAKES UP TOO MUCH MEMORY!!!
         // only bother to do this if the event hasn't already been cancelled
         if (!event.isCancelled())
-            for (Location loc : plugin.circuits.getCircuitLocations())
+            for (Location loc : plugin.circuits.circuitLocations())
                 for(Location l : plugin.circuits.getCircuit(loc).getReceivers()) {
                     // determine whether or not this chunk is within the range of the circuit
                     // (based on the chunk's X and Z ... not the block's x and z)
@@ -42,8 +42,7 @@ public class QuantumConnectorsWorldListener extends WorldListener
                     // if this chunk is not inside chunk range, ignore this event and move on
                     if(Math.abs(chunkX - circuitChunkX) > plugin.getChunkUnloadRange() || Math.abs(chunkZ - circuitChunkZ) > plugin.getChunkUnloadRange())
                         continue;
-
-                    plugin.getLogger().finer("[QuantumConnectors] - Chunk contains or surrounds circuit node, not unloading.");
+                    
                     event.setCancelled(true);
                     break;
                 }

@@ -11,15 +11,21 @@ import java.util.List;
 import org.bukkit.Server;
 import org.bukkit.Location;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.Set;
+import net.minecraft.server.EntityTNTPrimed;
+import org.bukkit.Chunk;
+import org.bukkit.Effect;
 import org.bukkit.World;
+import org.bukkit.block.BlockFace;
+import org.bukkit.craftbukkit.CraftWorld;
 
 public final class CircuitManager{
     private final QuantumConnectors plugin;
-    public static Configuration yml;
+    private Configuration yml;
 
-    private static Map<Location,Circuit> circuits;
-    private List<String> loadedWorlds = new ArrayList<String>();
+    private static Map<Location,Circuit> circuits = new HashMap<Location,Circuit>();
+    private static List<String> loadedWorlds = new ArrayList<String>();
 
     private Material[] validSenders = new Material[]{
         Material.LEVER,
@@ -45,20 +51,26 @@ public final class CircuitManager{
         Material.TNT
     };
 
-    public CircuitManager(File ymlFile,final QuantumConnectors plugin){
-        this.plugin = plugin;
-
-        circuits = new HashMap<Location,Circuit>();
+    public CircuitManager(File ymlFile, final QuantumConnectors qc){
+        plugin = qc;
         
         yml = new Configuration(ymlFile);
-        yml.load();
+        reload();
 
         Load();
+        
+        preloadChunks();
+    }
+    public void reload() {
+        yml.load();
     }
 
     // Fixed to new circuit layout
     public boolean circuitExists(Location lSender){
         return circuits.containsKey(lSender);
+    }
+    public Set<Location> circuitLocations() {
+        return circuits.keySet();
     }
     public Circuit getCircuit(Location lSender){
         return circuits.get(lSender);
@@ -70,8 +82,100 @@ public final class CircuitManager{
         circuits.put(sender, new Circuit(type, receivers));
     }
     public void removeCircuit(Location lSender){
-        if(circuits.containsKey(lSender)){
+        if(circuitExists(lSender))
             circuits.remove(lSender);
+    }
+
+    // Activate
+    public void activateCircuit(Location lSender,int current,int chain){
+        Circuit circuit = getCircuit(lSender);
+
+        for(Location receiver : circuit.getReceivers()) {
+            Block b = receiver.getBlock();
+
+            if(isValidReceiver(b)){
+                int iType = circuit.type;
+
+                if(b.getType() == Material.TNT) // TnT is one time use!
+                    removeCircuit(lSender);
+
+                if(iType == plugin.typeQuantum){
+                    setReceiver(b, current>0?true:false);
+                }else if(iType == plugin.typeOn){
+                    if(current > 0)
+                        setReceiver(b, true);
+                }else if(iType == plugin.typeOff){
+                    if(current > 0)
+                        setReceiver(b, false);
+                }else if(iType == plugin.typeToggle){
+                    if(current > 0)
+                        setReceiver(b, getBlockCurrent(b)>0?false:true);
+                }else if(iType == plugin.typeReverse){
+                    setReceiver(b, current>0?false:true);
+                }else if(iType == plugin.typeRandom){
+                    if(current > 0){
+                        setReceiver(b, new Random().nextBoolean()?true:false);
+                    }
+                }
+
+                //allow zero to be infinite
+                if(plugin.getChain() > 0) chain++;
+                if(chain <= plugin.getChain() && circuitExists(b.getLocation()))
+                    activateCircuit(b.getLocation(),getBlockCurrent(b),chain);
+            }else{
+                // Don't want to remove circuit, want to remove receiver
+                removeCircuit(lSender);
+            }
+        }
+    }
+    public int getBlockCurrent(Block b) {
+        Material mBlock = b.getType();
+        int iData = (int) b.getData();
+
+        if(mBlock == Material.LEVER
+            || mBlock == Material.POWERED_RAIL)
+            return (iData&0x08)==0x08?15:0;
+
+        else if(mBlock == Material.IRON_DOOR_BLOCK 
+            || mBlock == Material.WOODEN_DOOR
+            || mBlock == Material.TRAP_DOOR)    
+            return (iData&0x04)==0x04?15:0;
+        
+        return b.getBlockPower();
+    }
+    private void setReceiver(Block block,boolean on){
+        Material mBlock = block.getType();
+        int iData = (int) block.getData();
+
+        if(mBlock == Material.LEVER || mBlock == Material.POWERED_RAIL){
+            if(on && (iData&0x08) != 0x08) iData|=0x08; //send power on
+            else if(!on && (iData&0x08) == 0x08)iData^=0x08; //send power off
+                
+            block.setData((byte) iData);
+        }else if(mBlock == Material.IRON_DOOR_BLOCK || mBlock == Material.WOODEN_DOOR){
+            Block bOtherPiece = block.getRelative(((iData&0x08) == 0x08)?BlockFace.DOWN:BlockFace.UP);
+            int iOtherPieceData = (int) bOtherPiece.getData();
+
+            if(on && (iData&0x04) != 0x04){
+                iData|=0x04;
+                iOtherPieceData|=0x04;
+            }else if(!on && (iData&0x04) == 0x04){
+                iData^=0x04;
+                iOtherPieceData^=0x04;
+            }
+            block.setData((byte) iData);
+            bOtherPiece.setData((byte) iOtherPieceData);
+        }else if(mBlock == Material.TRAP_DOOR){
+            if(on && (iData&0x04) != 0x04) iData|=0x04;//send open
+            else if(!on && (iData&0x04) == 0x04) iData^=0x04;//send close
+            
+            block.setData((byte) iData);
+        }else if(mBlock == Material.TNT) {
+            block.setType(Material.AIR);
+            CraftWorld world = (CraftWorld)block.getWorld();
+            EntityTNTPrimed tnt = new EntityTNTPrimed(world.getHandle(), block.getX() + 0.5F, block.getY() + 0.5F, block.getZ() + 0.5F);
+            world.getHandle().addEntity(tnt);
+            block.getWorld().playEffect(block.getLocation(), Effect.SMOKE, 1);
         }
     }
 
@@ -108,7 +212,7 @@ public final class CircuitManager{
     }
 
     // Load old/new syntax
-    public void Load() {
+    private void Load() {
         if(yml.getProperty("circuits") != null) { // Old Circuitry exists!
             loadOld();
             // Delete so it doesn't load again
@@ -159,7 +263,7 @@ public final class CircuitManager{
     }
     private Location getLocation(World world, String[] xyz) {
         if(xyz.length < 3) return null;
-        return new Location(world, Integer.parseInt(xyz[0]),Integer.parseInt(xyz[1]),Integer.parseInt(xyz[2]));
+        return new Location(world, Integer.parseInt(xyz[0]), Integer.parseInt(xyz[1]), Integer.parseInt(xyz[2]));
     }
     // The old mess...
     public void loadOld(){
@@ -198,9 +302,9 @@ public final class CircuitManager{
     public void saveWorld(String world) {
         if(yml.getProperty(world) != null) yml.removeProperty(world); // Remove world if it exists
         int count = 0;
-        for(Location key : circuits.keySet()) 
+        for(Location key : circuitLocations()) 
             if (key.getWorld().toString().equals(world)) {
-            Circuit circuit = circuits.get(key);
+            Circuit circuit = getCircuit(key);
             String path = world+".circuit_"+count;
 
             yml.setProperty(path+".type", circuit.type); // Save Type
@@ -213,7 +317,7 @@ public final class CircuitManager{
 
             yml.setProperty(path+".receivers", temp); // Save receiver list
 
-            circuits.remove(key); // Remove circuit from memory
+            removeCircuit(key); // Remove circuit from memory
 
             count += 1;
         }
@@ -228,8 +332,8 @@ public final class CircuitManager{
             if(yml.getProperty(world.getName()) != null) // World Exists
                 yml.removeProperty(world.getName()); // Remove world circuits
 
-        for(Location key : circuits.keySet()){
-            Circuit currentCircuit = circuits.get(key);
+        for(Location key : circuitLocations()){
+            Circuit currentCircuit = getCircuit(key);
             String wName = key.getWorld().getName(); // Get world name
             int count = worldCount.get(wName)==null?0:worldCount.get(wName); // Get world circuit ID
             String path  = wName+".circuit_"+count; // Set base path
@@ -248,9 +352,30 @@ public final class CircuitManager{
         }
         yml.save();
     }
+    
+    
+    // Loads chunks that contain circuits (with a range around them as well).
+    private void preloadChunks() {
+        for (Location loc : circuitLocations()) {
+            // Don't need to load sender...!
+            for(Location l : getCircuit(loc).getReceivers()) {
+                // get the center chunk from the block
+                Chunk center = loc.getBlock().getChunk();
+                // get the world from the chunk
+                World world = center.getWorld();
+                // get our surrounding range
+                int range = plugin.getChunkUnloadRange();
 
-    public Set<Location> getCircuitLocations()
-    {
-        return circuits.keySet();
+                // iterate over the matrix of blocks that make up the center (circuit) block's chunk and the chunks within the "range"
+                for (int dx = -(range); dx <= range; dx++) {
+                    for (int dz = -(range); dz <= range; dz++) {
+                        // load the chunk
+                        Chunk chunk = world.getChunkAt(center.getX() + dx,
+                                                       center.getZ() + dz);
+                        world.loadChunk(chunk);
+                    }
+                }
+            }
+        }
     }
 }

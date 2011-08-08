@@ -19,8 +19,11 @@ public class QuantumConnectorsBlockListener extends BlockListener{
     }
 
     public void onBlockBreak(BlockBreakEvent event){
+        // Breaking Sender
         if(plugin.circuits.circuitExists(event.getBlock().getLocation())){
             plugin.circuits.removeCircuit(event.getBlock().getLocation());
+        } else { // if breaking receiver
+            
         }
     }
 }
