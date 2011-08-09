@@ -6,12 +6,16 @@ Changelog
 ---------
 Version 0.4
 
-+ <s>Added chunk persistence</s> (Senders only)
++ Added chunk persistence
 + Wireless TnT support!
++ Added BukkitPerms support
+-- Removed "Permissions 3.x/2.x" support
+* Fixed various compatability issues.
 * Cleaned Code
-* Fixed Issue [#2](https://github.com/feildmaster/Quantum-Connectors/issues/2)
-* Fixed Issue [#6](https://github.com/feildmaster/Quantum-Connectors/issues/6)
-
+* Fixed Issues
+** [#1](https://github.com/feildmaster/Quantum-Connectors/issues/1)
+** [#2](https://github.com/feildmaster/Quantum-Connectors/issues/2) 
+** [#6](https://github.com/feildmaster/Quantum-Connectors/issues/6)
 
 Version 0.3.4
 
