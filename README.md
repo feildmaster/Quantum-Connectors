@@ -4,18 +4,28 @@ Get rid of wires, completely!
 
 Changelog
 ---------
-Version 0.4
+Version 1.0
 
-+ Added chunk persistence
-+ Wireless TnT support!
-+ Added BukkitPerms support
--- Removed "Permissions 3.x/2.x" support
-* Fixed various compatability issues.
+* Requires(!) at least CraftbukkitBukkit 1000
++ Added SuperPerms support
+* Making of circuits defaults to OP
+- Removed "Permissions 3.x/2.x" support
++ Added [chunk persistence](https://github.com/feildmaster/Quantum-Connectors/issues/1)
++ New Receiver: TNT
+- Removed Sender: Repeater
+
+Bug Fixes:
+
+* Fixed circuits breaking on "instant break" items [#6](https://github.com/feildmaster/Quantum-Connectors/issues/6)
++ Doors make sound when opening/closing
+* Fixed various compatability issues
 * Cleaned Code
-* Fixed Issues
-** [#1](https://github.com/feildmaster/Quantum-Connectors/issues/1)
-** [#2](https://github.com/feildmaster/Quantum-Connectors/issues/2) 
-** [#6](https://github.com/feildmaster/Quantum-Connectors/issues/6)
+
+Fixed Issues:
+
+* [#1](https://github.com/feildmaster/Quantum-Connectors/issues/1)
+* [#2](https://github.com/feildmaster/Quantum-Connectors/issues/2) 
+* [#6](https://github.com/feildmaster/Quantum-Connectors/issues/6)
 
 Version 0.3.4
 
@@ -55,4 +65,3 @@ This plugin uses the following libraries:
 *   Bukkit
 *   Craftbukkit
 *   [Minecraft_server.jar](http://www.minecraft.net/download/Minecraft_Server.exe?v=1311325327381)
-*   [Permissions]()
