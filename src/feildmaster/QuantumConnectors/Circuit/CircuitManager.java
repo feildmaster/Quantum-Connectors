@@ -115,15 +115,14 @@ public final class CircuitManager{
     // Activate
     public void activateCircuit(Location lSender,int current,int chain){
         Circuit circuit = getCircuit(lSender);
+        List receivers = circuit.getReceivers();
 
-        for(Location receiver : circuit.getReceivers()) {
-            Block b = receiver.getBlock();
+        if(!receivers.isEmpty())
+        for(Object r : receivers) {
+            Block b = ((Location) r).getBlock();
 
             if(isValidReceiver(b)){
                 int iType = circuit.type;
-
-                if(b.getType() == Material.TNT) // TnT is one time use!
-                    removeReceiver(lSender, b.getLocation());
 
                 if(iType == plugin.typeQuantum){
                     setReceiver(b, current>0?true:false);
@@ -143,6 +142,9 @@ public final class CircuitManager{
                         setReceiver(b, new Random().nextBoolean()?true:false);
                     }
                 }
+                
+                if(b.getType() == Material.TNT) // TnT is one time use!
+                    removeReceiver(lSender, b.getLocation());
 
                 //allow zero to be infinite
                 if(plugin.getChain() > 0) chain++;
