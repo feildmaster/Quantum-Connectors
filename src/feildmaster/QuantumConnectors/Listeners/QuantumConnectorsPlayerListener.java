@@ -1,6 +1,6 @@
-package Ne0nx3r0.QuantumConnectors.Listeners;
+package feildmaster.QuantumConnectors.Listeners;
 
-import Ne0nx3r0.QuantumConnectors.QuantumConnectors;
+import feildmaster.QuantumConnectors.QuantumConnectors;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerInteractEvent;
 import java.util.Map;

@@ -1,8 +1,9 @@
-package Ne0nx3r0.QuantumConnectors;
+package feildmaster.QuantumConnectors;
 
-import Ne0nx3r0.QuantumConnectors.Listeners.*;
-import Ne0nx3r0.QuantumConnectors.Circuit.*;
+import feildmaster.QuantumConnectors.Listeners.*;
+import feildmaster.QuantumConnectors.Circuit.*;
 import java.io.File;
+import java.util.ArrayList;
 import org.bukkit.util.config.Configuration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
@@ -21,7 +22,7 @@ public class QuantumConnectors extends JavaPlugin {
     private final QuantumConnectorsBlockListener blockListener = new QuantumConnectorsBlockListener(this);
     private final QuantumConnectorsPlayerListener playerListener = new QuantumConnectorsPlayerListener(this);
     private final QuantumConnectorsWorldListener worldListener = new QuantumConnectorsWorldListener(this);
-
+    
     public static Map<String,Integer> circuitTypes = new HashMap<String,Integer>();
 
     public static CircuitManager circuits;
@@ -39,9 +40,11 @@ public class QuantumConnectors extends JavaPlugin {
     private int MAX_CHAIN_LINKS = 3;
     private int AUTOSAVE_INTERVAL = 10;//specified here in minutes
     private int CHUNK_UNLOAD_RANGE = 0; //number of chunks surrounding the circuit to keep around when unloading chunks
-    private List<String> DISSABLED_WORLDS; // Want to dissable some worlds? Comming soon!
 
     // Public "gets"
+    public void msg(Player player,String sMessage){
+        player.sendMessage(ChatColor.LIGHT_PURPLE+"[QC] "+ChatColor.WHITE+sMessage);
+    }
     public int getChain() {
         return MAX_CHAIN_LINKS;
     }
@@ -49,13 +52,15 @@ public class QuantumConnectors extends JavaPlugin {
         return CHUNK_UNLOAD_RANGE;
     }
     
-    public void onEnable(){
+    public void onEnable() {
 //Register events
         PluginManager pm = getServer().getPluginManager();
-        pm.registerEvent(Event.Type.REDSTONE_CHANGE, blockListener, Priority.Normal, this);
+        pm.registerEvent(Event.Type.REDSTONE_CHANGE, blockListener, Priority.Low, this);
         pm.registerEvent(Event.Type.BLOCK_BREAK, blockListener, Priority.Normal, this);
         pm.registerEvent(Event.Type.PLAYER_INTERACT, playerListener, Priority.Normal, this);
         pm.registerEvent(Event.Type.CHUNK_UNLOAD, worldListener, Priority.Normal, this);
+        pm.registerEvent(Event.Type.WORLD_LOAD, worldListener, Priority.Monitor, this);
+        pm.registerEvent(Event.Type.WORLD_UNLOAD, worldListener, Priority.Monitor, this);
         
 //Setup circuits
         circuitTypes.put("quantum",typeQuantum);
@@ -78,9 +83,9 @@ public class QuantumConnectors extends JavaPlugin {
 //Enabled msg
         System.out.println("[Quantum Connectors] version " + getDescription().getVersion() + " ENABLED");
     }
-
-    public void msg(Player player,String sMessage){
-        player.sendMessage(ChatColor.LIGHT_PURPLE+"[QC] "+ChatColor.WHITE+sMessage);
+    public void onDisable(){
+        circuits.Save();
+        getServer().getScheduler().cancelTask(AUTO_SAVE_ID);
     }
 
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args){
@@ -94,15 +99,12 @@ public class QuantumConnectors extends JavaPlugin {
         if(args.length == 0 || args[0].equalsIgnoreCase("?")){
             msg(p,"To create a quantum circuit, use /qc <circuit>; and click   on a sender and then a receiver with redstone.");
 
-            String sAvailableCircuits = "";
+            String s = "";
             for(String sKey : circuitTypes.keySet()){
-                sAvailableCircuits += sKey+", ";
+                s += sKey+", ";
             }
-            sAvailableCircuits = sAvailableCircuits.substring(0,sAvailableCircuits.length()-2);
-
-            msg(p,ChatColor.YELLOW+"Available circuits: "+ChatColor.WHITE+sAvailableCircuits);
-
-            return true;
+            
+            msg(p,ChatColor.YELLOW+"Available circuits: "+ChatColor.WHITE+s.substring(0,s.length()-2));
         }else if(args[0].equalsIgnoreCase("cancel")){
             if(playerListener.pendingCircuits.containsKey(p)){
                 playerListener.pendingCircuits.remove(p);
@@ -113,22 +115,17 @@ public class QuantumConnectors extends JavaPlugin {
                 msg(p,"No pending circuits");
             }
         }else if(circuitTypes.containsKey(args[0])){
-            if(p.hasPermission("QuantumConnectors.create")){
+            if(p.hasPermission("QuantumConnectors.create."+args[0].toLowerCase())){
+                playerListener.pendingCircuits.put(p,circuitTypes.get(args[0].toLowerCase()));
+                msg(p,"Circuit is ready to be created!");
+            } else {
                 msg(p,ChatColor.RED+"You don't have permission to create the "+args[0]+" circuit!");
-                return true;
             }
-            playerListener.pendingCircuits.put(p,circuitTypes.get(args[0]));
-            msg(p,"Circuit is ready to be created!");
         }else{
             msg(p,"Invalid circuit specified!");
         }
 
         return true;
-    }
-
-    public void onDisable(){
-        circuits.Save();
-        getServer().getScheduler().cancelTask(AUTO_SAVE_ID);
     }
 
     private void setupConfig() {

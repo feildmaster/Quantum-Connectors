@@ -1,6 +1,7 @@
-package Ne0nx3r0.QuantumConnectors.Listeners;
+package feildmaster.QuantumConnectors.Listeners;
 
-import Ne0nx3r0.QuantumConnectors.QuantumConnectors;
+import feildmaster.QuantumConnectors.QuantumConnectors;
+import org.bukkit.Location;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -18,12 +19,11 @@ public class QuantumConnectorsBlockListener extends BlockListener{
         }
     }
 
-    public void onBlockBreak(BlockBreakEvent event){
-        // Breaking Sender
-        if(plugin.circuits.circuitExists(event.getBlock().getLocation())){
-            plugin.circuits.removeCircuit(event.getBlock().getLocation());
-        } else { // if breaking receiver
-            
-        }
+    public void onBlockBreak(BlockBreakEvent event) {
+        Location l = event.getBlock().getLocation();
+        if(plugin.circuits.circuitExists(l)) // Breaking Sender
+            plugin.circuits.removeCircuit(l);
+        else if (plugin.circuits.receiverExists(l))// Breaking receiver
+            plugin.circuits.removeReceiver(l);
     }
 }

@@ -1,6 +1,6 @@
 name: Quantum Connectors
-main: Ne0nx3r0.QuantumConnectors.QuantumConnectors
-version: 0.4
+main: feildmaster.QuantumConnectors.QuantumConnectors
+version: 1.0
 authors:
   - Ne0nx3r0
   - Feildmaster
@@ -12,15 +12,39 @@ permissions:
     QuantumConnectors.*:
       description: Allows all permissions
       children:
-        QuantumConnectors.create : true
-        QuantumConnectors.edit : true
-        QuantumConnectors.break : true
-    QuantumConnectors.create:
+        QuantumConnectors.create.*: true
+        QuantumConnectors.edit: true
+        QuantumConnectors.break: true
+    QuantumConnectors.create.*:
       description: Allows creation of circuits
+      children:
+        QuantumConnectors.create.quantum: true
+        QuantumConnectors.create.on: true
+        QuantumConnectors.create.off: true
+        QuantumConnectors.create.toggle: true
+        QuantumConnectors.create.reverse: true
+        QuantumConnectors.create.random: true
+    QuantumConnectors.create.quantum:
+      description: Allows creation of "Quantum" Circuit
+      default: op
+    QuantumConnectors.create.on:
+      description: Allows creation of "On" circuit
+      default: op
+    QuantumConnectors.create.off:
+      description: Allows creation of "On" circuit
+      default: op
+    QuantumConnectors.create.toggle:
+      description: Allows creation of "On" circuit
+      default: op
+    QuantumConnectors.create.reverse:
+      description: Allows creation of "On" circuit
+      default: op
+    QuantumConnectors.create.random:
+      description: Allows creation of "On" circuit
       default: op
     QuantumConnectors.edit:
-      description: Allows edit of circuits (Coming soon)
+      description: Allows edit of any circuit (Coming soon)
       default: op
     QuantumConnectors.break:
-      description: Allows breaking of receivers/circuits
+      description: Allows breaking of any receiver/circuit (Coming soon)
       default: op

@@ -16,6 +16,7 @@ Version 1.0
 
 Bug Fixes:
 
+* Breaking "receiver" will now destroy the circuit, too
 * Fixed circuits breaking on "instant break" items [#6](https://github.com/feildmaster/Quantum-Connectors/issues/6)
 + Doors make sound when opening/closing
 * Fixed various compatability issues

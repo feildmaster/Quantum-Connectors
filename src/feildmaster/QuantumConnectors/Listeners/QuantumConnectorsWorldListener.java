@@ -1,6 +1,6 @@
-package Ne0nx3r0.QuantumConnectors.Listeners;
+package feildmaster.QuantumConnectors.Listeners;
 
-import Ne0nx3r0.QuantumConnectors.QuantumConnectors;
+import feildmaster.QuantumConnectors.QuantumConnectors;
 import org.bukkit.Location;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.event.world.WorldListener;
@@ -9,6 +9,7 @@ import org.bukkit.event.world.WorldUnloadEvent;
 
 /**
  * Author: niftymonkey - https://github.com/niftymonkey
+ *         feildmaster - https://github.com/feildmaster
  */
 public class QuantumConnectorsWorldListener extends WorldListener
 {
@@ -27,18 +28,16 @@ public class QuantumConnectorsWorldListener extends WorldListener
     }
 
     public void onChunkUnload(ChunkUnloadEvent event) {
-        // THIS LISTENER TAKES UP TOO MUCH MEMORY!!!
-        // only bother to do this if the event hasn't already been cancelled
+        // TODO: Different way of unloading? I don't like looping so much on every chunk! -- Feildmaster
+        
         if (!event.isCancelled())
             for (Location loc : plugin.circuits.circuitLocations())
                 for(Location l : plugin.circuits.getCircuit(loc).getReceivers()) {
-                    // determine whether or not this chunk is within the range of the circuit
-                    // (based on the chunk's X and Z ... not the block's x and z)
-
                     int circuitChunkX = loc.getBlock().getChunk().getX();
                     int chunkX = event.getChunk().getX();
                     int circuitChunkZ = loc.getBlock().getChunk().getZ();
                     int chunkZ = event.getChunk().getZ();
+                    
                     // if this chunk is not inside chunk range, ignore this event and move on
                     if(Math.abs(chunkX - circuitChunkX) > plugin.getChunkUnloadRange() || Math.abs(chunkZ - circuitChunkZ) > plugin.getChunkUnloadRange())
                         continue;

@@ -1,6 +1,6 @@
-package Ne0nx3r0.QuantumConnectors.Circuit;
+package feildmaster.QuantumConnectors.Circuit;
 
-import Ne0nx3r0.QuantumConnectors.QuantumConnectors;
+import feildmaster.QuantumConnectors.QuantumConnectors;
 import org.bukkit.util.config.Configuration;
 import java.io.File;
 import java.util.Map;
@@ -25,6 +25,7 @@ public final class CircuitManager{
     private Configuration yml;
 
     private static Map<Location,Circuit> circuits = new HashMap<Location,Circuit>();
+    private Map<Location,List<String[]>> pendingReceivers = new HashMap<Location,List<String[]>>();
     private static List<String> loadedWorlds = new ArrayList<String>();
 
     private Material[] validSenders = new Material[]{
@@ -39,8 +40,6 @@ public final class CircuitManager{
         Material.WOODEN_DOOR,
         Material.TRAP_DOOR,
         Material.POWERED_RAIL,
-        Material.DIODE_BLOCK_OFF,
-        Material.DIODE_BLOCK_ON
     };
     private Material[] validReceivers = new Material[]{
         Material.LEVER,
@@ -48,7 +47,9 @@ public final class CircuitManager{
         Material.WOODEN_DOOR,
         Material.TRAP_DOOR,
         Material.POWERED_RAIL,
-        Material.TNT
+        //Material.PISTON_BASE,
+        //Material.PISTON_STICKY_BASE,
+        Material.TNT,
     };
 
     public CircuitManager(File ymlFile, final QuantumConnectors qc){
@@ -66,8 +67,15 @@ public final class CircuitManager{
     }
 
     // Fixed to new circuit layout
-    public boolean circuitExists(Location lSender){
-        return circuits.containsKey(lSender);
+    public boolean circuitExists(Location l){
+        return circuits.containsKey(l);
+    }
+    public boolean receiverExists(Location l) {
+        for(Circuit c : circuits.values())
+            if(c.getReceivers().contains(l))
+                return true;
+        
+        return false;
     }
     public Set<Location> circuitLocations() {
         return circuits.keySet();
@@ -85,6 +93,24 @@ public final class CircuitManager{
         if(circuitExists(lSender))
             circuits.remove(lSender);
     }
+    public void removeReceiver(Location s, Location l) {
+        Circuit c = getCircuit(s);
+        if(c.getReceivers().contains(l)) {
+            c.delReceiver(l);
+            if(c.getReceivers().isEmpty())
+                removeCircuit(s);
+        }
+    }
+    public void removeReceiver(Location l) {
+        for(Location l1 : circuits.keySet()) {
+            Circuit c = getCircuit(l1);
+            if(c.getReceivers().contains(l)) {
+                c.delReceiver(l);
+                if(c.getReceivers().isEmpty())
+                    removeCircuit(l1);
+            }
+        }
+    }
 
     // Activate
     public void activateCircuit(Location lSender,int current,int chain){
@@ -97,7 +123,7 @@ public final class CircuitManager{
                 int iType = circuit.type;
 
                 if(b.getType() == Material.TNT) // TnT is one time use!
-                    removeCircuit(lSender);
+                    removeReceiver(lSender, b.getLocation());
 
                 if(iType == plugin.typeQuantum){
                     setReceiver(b, current>0?true:false);
@@ -123,8 +149,7 @@ public final class CircuitManager{
                 if(chain <= plugin.getChain() && circuitExists(b.getLocation()))
                     activateCircuit(b.getLocation(),getBlockCurrent(b),chain);
             }else{
-                // Don't want to remove circuit, want to remove receiver
-                removeCircuit(lSender);
+                removeReceiver(lSender,b.getLocation());
             }
         }
     }
@@ -147,12 +172,36 @@ public final class CircuitManager{
         Material mBlock = block.getType();
         int iData = (int) block.getData();
 
-        if(mBlock == Material.LEVER || mBlock == Material.POWERED_RAIL){
+        if(mBlock == Material.LEVER) {
+            // Massive annoyance
             if(on && (iData&0x08) != 0x08) iData|=0x08; //send power on
             else if(!on && (iData&0x08) == 0x08)iData^=0x08; //send power off
-                
-            block.setData((byte) iData);
-        }else if(mBlock == Material.IRON_DOOR_BLOCK || mBlock == Material.WOODEN_DOOR){
+            int i1 = iData & 7;
+            net.minecraft.server.World w = ((net.minecraft.server.World)((CraftWorld)block.getWorld()).getHandle());
+            Location l = block.getLocation();
+            int i = (int)l.getX();
+            int j = (int)l.getY();
+            int k = (int)l.getZ();
+            int id = block.getTypeId();
+            w.setData(i, j, k, iData);
+            w.applyPhysics(i, j, k, id);
+            if (i1 == 1) {
+                w.applyPhysics(i - 1, j, k, id);
+            } else if (i1 == 2) {
+                w.applyPhysics(i + 1, j, k, id);
+            } else if (i1 == 3) {
+                w.applyPhysics(i, j, k - 1, id);
+            } else if (i1 == 4) {
+                w.applyPhysics(i, j, k + 1, id);
+            } else {
+                w.applyPhysics(i, j - 1, k, id);
+            }
+        } else if ( mBlock == Material.POWERED_RAIL) {
+            if(on && (iData&0x08) != 0x08) iData|=0x08; //send power on
+            else if(!on && (iData&0x08) == 0x08)iData^=0x08; //send power off
+            
+            block.setData((byte)iData);
+        } else if(mBlock == Material.IRON_DOOR_BLOCK || mBlock == Material.WOODEN_DOOR){
             Block bOtherPiece = block.getRelative(((iData&0x08) == 0x08)?BlockFace.DOWN:BlockFace.UP);
             int iOtherPieceData = (int) bOtherPiece.getData();
 
@@ -165,6 +214,7 @@ public final class CircuitManager{
             }
             block.setData((byte) iData);
             bOtherPiece.setData((byte) iOtherPieceData);
+            block.getWorld().playEffect(block.getLocation(), Effect.DOOR_TOGGLE, 0, 10);
         }else if(mBlock == Material.TRAP_DOOR){
             if(on && (iData&0x04) != 0x04) iData|=0x04;//send open
             else if(!on && (iData&0x04) == 0x04) iData^=0x04;//send close
@@ -176,6 +226,16 @@ public final class CircuitManager{
             EntityTNTPrimed tnt = new EntityTNTPrimed(world.getHandle(), block.getX() + 0.5F, block.getY() + 0.5F, block.getZ() + 0.5F);
             world.getHandle().addEntity(tnt);
             block.getWorld().playEffect(block.getLocation(), Effect.SMOKE, 1);
+        } else if(mBlock == Material.PISTON_BASE || mBlock == Material.PISTON_STICKY_BASE) {
+            // Makeshift piston code... Doesn't work!
+            if(on && (iData&0x08) != 0x08) iData|=0x08; //send power on
+            else if(!on && (iData&0x08) == 0x08)iData^=0x08; //send power off
+            block.setData((byte) iData);
+            //net.minecraft.server.Block.PISTON.doPhysics(((CraftWorld)block.getWorld()).getHandle(), block.getX(), block.getY(), block.getZ(), -1);
+        } else if (mBlock == Material.REDSTONE_TORCH_ON) {
+            if(!on) block.setType(Material.REDSTONE_TORCH_OFF);
+        } else if (mBlock == Material.REDSTONE_TORCH_OFF) {
+            if(on)block.setType(Material.REDSTONE_TORCH_ON);
         }
     }
 
@@ -229,14 +289,21 @@ public final class CircuitManager{
                         if(yml.getProperty(path) == null) break; // If it doesn't exist, break the loop for the world
 
                         List<Location> list = new ArrayList<Location>();
+                        List<String[]> pend = new ArrayList<String[]>();
                         for(Object xyz : yml.getList(path+".receivers")) {
-                            String[] loc = xyz.toString().split(","); // Iterated for multi-world... maybe?
-                            list.add(getLocation(plugin.getServer().getWorld(loc[3]), loc));
+                            String[] loc = xyz.toString().split(",");
+                            
+                            World w = plugin.getServer().getWorld(loc[3]);
+                            if(w != null) // The world is loaded!
+                                list.add(getLocation(plugin.getServer().getWorld(loc[3]), loc));
+                            else // Save to pending!
+                                pend.add(loc);
                         }
                         
-                        addCircuit(getLocation(world, yml.getString(path+".sender").split(",")),
-                                list, yml.getInt(path+".type",0)); // Input the circuit
-
+                        Location cl = getLocation(world, yml.getString(path+".sender").split(",")); 
+                        addCircuit(cl, list, yml.getInt(path+".type",0)); // Input the circuit
+                        
+                        if(!pend.isEmpty()) pendingReceivers.put(cl, pend);
                     }
                 }
                 loadedWorlds.add(world.getName());
@@ -251,11 +318,27 @@ public final class CircuitManager{
                     if(yml.getProperty(path) == null) break;
 
                     List<Location> list = new ArrayList<Location>();
-                    for(Object xyz : yml.getList(path+".receivers"))
-                        list.add(getLocation(world, xyz.toString().split(",")));
+                    List<String[]> pend = new ArrayList<String[]>();
+                    for(Object xyz : yml.getList(path+".receivers")) {
+                        String[] loc = xyz.toString().split(",");
+                        if(loc[3] == name) // We're already in the world!
+                            list.add(getLocation(world, loc));
+                        else if (loadedWorlds.contains(loc[3])) // Worlds loaded
+                            list.add(getLocation(plugin.getServer().getWorld(loc[3]), loc));
+                        else // Set as pending...
+                            pend.add(loc);
+                    }
+                    
+                    // Loop through any pending Receivers
+                    for(Location l : pendingReceivers.keySet())
+                        for(String[] s : pendingReceivers.get(l))
+                        if(s[3] == name)
+                            getCircuit(l).addReceiver(getLocation(world, s));
+                    
+                    Location cl = getLocation(world, yml.getString(path+".sender").split(",")); 
+                    addCircuit(cl, list, yml.getInt(path+".type",0)); // Input the circuit
 
-                    addCircuit(getLocation(world, yml.getString(path+".sender").split(",")),
-                            list, yml.getInt(path+".type",0)); // Input the circuit
+                    if(!pend.isEmpty()) pendingReceivers.put(cl, pend);
                 }
             }
             loadedWorlds.add(name);
@@ -266,7 +349,7 @@ public final class CircuitManager{
         return new Location(world, Integer.parseInt(xyz[0]), Integer.parseInt(xyz[1]), Integer.parseInt(xyz[2]));
     }
     // The old mess...
-    public void loadOld(){
+    private void loadOld(){
         List tempCircuits = yml.getList("circuits");
 
         Server server = plugin.getServer();
@@ -293,7 +376,6 @@ public final class CircuitManager{
                 (Integer) temp.get("rz")
             );
 
-            // Removed check, it's checked on activation anyway.
             addCircuit(lSender,lReceiver,iType);
 	}
     }
@@ -314,6 +396,12 @@ public final class CircuitManager{
             List <String> temp = new ArrayList<String>();
             for(Location loc : circuit.getReceivers()) // Loop through receivers
                 temp.add(loc.getBlockX()+","+loc.getBlockY()+","+loc.getBlockZ()+","+loc.getWorld().getName());
+            
+            if(pendingReceivers.containsKey(key)) {
+                for(String[] s : pendingReceivers.get(key))
+                    temp.add(s[0]+","+s[1]+","+s[2]+","+s[3]);
+                pendingReceivers.remove(key);
+            }
 
             yml.setProperty(path+".receivers", temp); // Save receiver list
 
@@ -345,9 +433,13 @@ public final class CircuitManager{
             List <String> temp = new ArrayList<String>();
             for(Location loc : currentCircuit.getReceivers()) // Loop through receivers
                 temp.add(loc.getBlockX()+","+loc.getBlockY()+","+loc.getBlockZ()+","+loc.getWorld().getName());
+            
+            if(pendingReceivers.containsKey(key))
+                for(String[] s : pendingReceivers.get(key))
+                    temp.add(s[0]+","+s[1]+","+s[2]+","+s[3]);
 
             yml.setProperty(path+".receivers", temp); // Save receiver list
-
+            
             worldCount.put(wName, count+1); // Increase Count
         }
         yml.save();
