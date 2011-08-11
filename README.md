@@ -4,6 +4,10 @@ Get rid of wires, completely!
 
 Changelog
 ---------
+Version 1.0.1
+
+* Fixed a bug with circuits...
+
 Version 1.0
 
 * Requires(!) at least CraftbukkitBukkit 1000
