@@ -93,37 +93,30 @@ public final class CircuitManager{
         if(circuitExists(lSender))
             circuits.remove(lSender);
     }
-    public void removeReceiver(Location s, Location l) {
-        Circuit c = getCircuit(s);
-        if(c.getReceivers().contains(l)) {
-            c.delReceiver(l);
-            if(c.getReceivers().isEmpty())
-                removeCircuit(s);
-        }
-    }
     public void removeReceiver(Location l) {
-        for(Location l1 : circuits.keySet()) {
-            Circuit c = getCircuit(l1);
-            if(c.getReceivers().contains(l)) {
-                c.delReceiver(l);
-                if(c.getReceivers().isEmpty())
-                    removeCircuit(l1);
+        while(receiverExists(l))
+            for(Location key : circuitLocations()) {
+                Circuit c = getCircuit(key);
+                if(c.getReceivers().contains(l)) {
+                    c.delReceiver(l);
+                    if(c.getReceivers().isEmpty())
+                        removeCircuit(key);
+                    break;
+                }
             }
-        }
     }
 
     // Activate
     public void activateCircuit(Location lSender,int current,int chain){
         Circuit circuit = getCircuit(lSender);
-        List receivers = circuit.getReceivers();
+        List<Location> receivers = circuit.getReceivers();
+        int iType = circuit.type;
 
-        if(!receivers.isEmpty())
-        for(Object r : receivers) {
-            Block b = ((Location) r).getBlock();
+        if(receivers.isEmpty()) return;
+        for(Location r : receivers) {
+            Block b = r.getBlock();
 
             if(isValidReceiver(b)){
-                int iType = circuit.type;
-
                 if(iType == plugin.typeQuantum){
                     setReceiver(b, current>0?true:false);
                 }else if(iType == plugin.typeOn){
@@ -138,22 +131,21 @@ public final class CircuitManager{
                 }else if(iType == plugin.typeReverse){
                     setReceiver(b, current>0?false:true);
                 }else if(iType == plugin.typeRandom){
-                    if(current > 0){
+                    if(current > 0)
                         setReceiver(b, new Random().nextBoolean()?true:false);
-                    }
                 }
                 
                 if(b.getType() == Material.TNT) // TnT is one time use!
-                    removeReceiver(lSender, b.getLocation());
+                    removeReceiver(r);
 
                 //allow zero to be infinite
                 if(plugin.getChain() > 0) chain++;
                 if(chain <= plugin.getChain() && circuitExists(b.getLocation()))
                     activateCircuit(b.getLocation(),getBlockCurrent(b),chain);
-            }else{
-                removeReceiver(lSender,b.getLocation());
-            }
+            }else
+                removeReceiver(r);
         }
+        
     }
     public int getBlockCurrent(Block b) {
         Material mBlock = b.getType();

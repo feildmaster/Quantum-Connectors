@@ -3,7 +3,6 @@ package feildmaster.QuantumConnectors;
 import feildmaster.QuantumConnectors.Listeners.*;
 import feildmaster.QuantumConnectors.Circuit.*;
 import java.io.File;
-import java.util.ArrayList;
 import org.bukkit.util.config.Configuration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
@@ -16,7 +15,6 @@ import java.util.Map;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import java.util.HashMap;
-import java.util.List;
 
 public class QuantumConnectors extends JavaPlugin {
     private final QuantumConnectorsBlockListener blockListener = new QuantumConnectorsBlockListener(this);
@@ -71,7 +69,7 @@ public class QuantumConnectors extends JavaPlugin {
         circuitTypes.put("random",typeRandom);
 
 //Configuration
-        setupConfig();
+        loadConfig();
 
 //Scheduled saves
         AUTO_SAVE_ID = getServer().getScheduler().scheduleSyncRepeatingTask(
@@ -128,37 +126,12 @@ public class QuantumConnectors extends JavaPlugin {
         return true;
     }
 
-    private void setupConfig() {
-        Configuration config = new Configuration(new File(this.getDataFolder(),"config.yml"));
-        config.load();
-        Boolean save = false;
-
-        int iMaxChainLinks = config.getInt("max_chain_links",-1);
-        if(iMaxChainLinks == -1){
-            iMaxChainLinks = MAX_CHAIN_LINKS;
-            config.setProperty("max_chain_links",iMaxChainLinks);
-            save = true;
-        }
-        MAX_CHAIN_LINKS = iMaxChainLinks;
-
-        int iAutoSaveInterval = config.getInt("autosave_minutes",-1);
-        if(iAutoSaveInterval == -1){
-            iAutoSaveInterval = AUTOSAVE_INTERVAL;
-            config.setProperty("autosave_minutes",iAutoSaveInterval);
-            save = true;
-        }
-        AUTOSAVE_INTERVAL = iAutoSaveInterval*60*20;//convert to minutes
-
-        int iChunkUnloadRange = config.getInt("chunk_unload_range",-1);
-        if(iChunkUnloadRange == -1){
-            iChunkUnloadRange = CHUNK_UNLOAD_RANGE;
-            config.setProperty("chunk_unload_range",iChunkUnloadRange);
-            save = true;
-        }
-        CHUNK_UNLOAD_RANGE = iChunkUnloadRange;
-
-        if(save)
-            config.save();
+    private void loadConfig() {
+        Configuration config = getConfiguration();
+        MAX_CHAIN_LINKS = config.getInt("max_chain_links",MAX_CHAIN_LINKS);
+        AUTOSAVE_INTERVAL = config.getInt("autosave_minutes", AUTOSAVE_INTERVAL)*60*20;//convert to minutes
+        CHUNK_UNLOAD_RANGE = config.getInt("chunk_unload_range",CHUNK_UNLOAD_RANGE);
+        config.save();
     }
     
     public void activateCircuit(Location lSender, int current){
