@@ -1,9 +1,9 @@
-name: Quantum Connectors
-main: feildmaster.QuantumConnectors.QuantumConnectors
-version: 1.0.2
+name: ${name}
+main: ${groupId}.QuantumConnectors
+version: ${version}
 authors:
-  - Ne0nx3r0
   - Feildmaster
+  - Ne0nx3r0
   - Niftymonkey
 commands:
   qc:

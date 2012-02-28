@@ -1,4 +1,4 @@
-package feildmaster.QuantumConnectors.Circuit;
+package com.feildmaster.quantum.circuit;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,7 +7,7 @@ import org.bukkit.Location;
 public class Circuit{
     public int type;
     private List<Location> receivers = new ArrayList<Location>();
-    
+
     public Circuit(int i, Location loc){
         type = i;
         receivers.add(loc);
@@ -16,7 +16,7 @@ public class Circuit{
         type = i;
         receivers = list;
     }
-    
+
     public void setReceivers(List<Location> list) {
         receivers = list;
     }
