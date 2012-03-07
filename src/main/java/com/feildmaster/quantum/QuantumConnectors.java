@@ -37,6 +37,7 @@ public class QuantumConnectors extends PluginWrapper {
         return CHUNK_UNLOAD_RANGE;
     }
 
+    @Override
     public void onEnable() {
         //Register events
         PluginManager pm = getServer().getPluginManager();
@@ -59,10 +60,12 @@ public class QuantumConnectors extends PluginWrapper {
         circuits = new CircuitManager(new File(this.getDataFolder(), "circuits.yml"), this);
     }
 
+    @Override
     public void onDisable() {
         circuits.Save();
     }
 
+    @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         if (!(sender instanceof Player)) {
             this.getLogger().info("This command has to be called by a player");
@@ -81,9 +84,9 @@ public class QuantumConnectors extends PluginWrapper {
 
             msg(p, ChatColor.YELLOW + "Available circuits: " + ChatColor.WHITE + s.substring(0, s.length() - 2));
         } else if (args[0].equalsIgnoreCase("cancel")) {
-            if (playerListener.pendingCircuits.containsKey(p)) {
-                playerListener.pendingCircuits.remove(p);
-                playerListener.pendingSenders.remove(p);
+            if (QuantumConnectorsPlayerListener.pendingCircuits.containsKey(p)) {
+                QuantumConnectorsPlayerListener.pendingCircuits.remove(p);
+                QuantumConnectorsPlayerListener.pendingSenders.remove(p);
 
                 msg(p, "Pending circuit removed!");
             } else {
@@ -91,7 +94,7 @@ public class QuantumConnectors extends PluginWrapper {
             }
         } else if (circuitTypes.containsKey(args[0])) {
             if (p.hasPermission("QuantumConnectors.create." + args[0].toLowerCase())) {
-                playerListener.pendingCircuits.put(p, circuitTypes.get(args[0].toLowerCase()));
+                QuantumConnectorsPlayerListener.pendingCircuits.put(p, circuitTypes.get(args[0].toLowerCase()));
                 msg(p, "Circuit is ready to be created!");
             } else {
                 msg(p, ChatColor.RED + "You don't have permission to create the " + args[0] + " circuit!");

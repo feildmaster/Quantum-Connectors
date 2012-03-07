@@ -20,19 +20,19 @@ public class QuantumConnectorsWorldListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onWorldLoad(WorldLoadEvent event) {
-        plugin.circuits.loadWorld(event.getWorld());
+        QuantumConnectors.circuits.loadWorld(event.getWorld());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onWorldUnload(WorldUnloadEvent event) {
-        plugin.circuits.saveWorld(event.getWorld().getName());
+        QuantumConnectors.circuits.saveWorld(event.getWorld().getName());
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onChunkUnload(ChunkUnloadEvent event) {
         // TODO: Different way of unloading? I don't like looping so much on every chunk! -- Feildmaster
-        for (Location loc : plugin.circuits.circuitLocations()) {
-            for (Location l : plugin.circuits.getCircuit(loc).getReceivers()) {
+        for (Location loc : QuantumConnectors.circuits.circuitLocations()) {
+            for (Location l : QuantumConnectors.circuits.getCircuit(loc).getReceivers()) {
                 int circuitChunkX = loc.getBlock().getChunk().getX();
                 int chunkX = event.getChunk().getX();
                 int circuitChunkZ = loc.getBlock().getChunk().getZ();
